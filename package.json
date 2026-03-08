@@ -1,0 +1,12 @@
+{
+  "name": "oref-alert-logger",
+  "version": "1.0.0",
+  "description": "Logs Israeli Home Front Command alerts to PostgreSQL",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
