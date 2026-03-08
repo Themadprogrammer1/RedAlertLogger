@@ -13,6 +13,8 @@ services:
         build: ./server
         env_file:
             - .config/.env
+        volumes:
+            - ./.config:/app/.config:ro
         depends_on:
             - db
         networks:
