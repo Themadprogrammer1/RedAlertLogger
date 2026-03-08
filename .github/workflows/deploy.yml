@@ -1,0 +1,31 @@
+name: Deploy Oref Alert Logger
+
+# Trigger only when a pull request targeting the 'main' branch is closed
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # This condition ensures the job ONLY runs if the PR was actually merged,
+    # ignoring PRs that were just closed without merging.
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy .env from server securely
+        # Replace '/opt/oref-logger-secrets/.env' with the actual path
+        # where you saved your .env file on your server.
+        run: cp /home/master/redAlert/secrets/.env .config/.env
+
+      - name: Build and Start New Containers
+        run: docker compose up -d --build
+
+      - name: Clean up old Docker images
+        run: docker image prune -f
