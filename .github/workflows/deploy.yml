@@ -22,7 +22,9 @@ jobs:
       - name: Copy .env from server securely
         # Replace '/opt/oref-logger-secrets/.env' with the actual path
         # where you saved your .env file on your server.
-        run: cp /home/master/redAlert/secrets/.env .config/.env
+        run: |
+          mkdir -p .config
+          cp /home/master/redAlert/secrets/.env .config/.env
 
       - name: Build and Start New Containers
         run: docker compose up -d --build
