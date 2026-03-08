@@ -1,30 +1,27 @@
 services:
-  db:
-    image: postgres:15-alpine
-    # Load secrets directly from the .env file
-    env_file:
-      - .config/.env
-    # Notice: NO 'ports' section here. The DB is completely isolated from the outside world.
-    networks:
-      - oref-inner-net
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: always
+    db:
+        image: postgres:16-alpine
+        env_file:
+            - .config/.env
+        networks:
+            - oref-inner-net
+        volumes:
+            - farsi:/var/lib/postgresql/data
+        restart: always
 
-  app:
-    build: .
-    env_file:
-      - .config/.env
-    depends_on:
-      - db
-    networks:
-      - oref-inner-net
-    restart: always
+    app:
+        build: ./server
+        env_file:
+            - .config/.env
+        depends_on:
+            - db
+        networks:
+            - oref-inner-net
+        restart: always
 
 volumes:
-  pgdata:
+    farsi:
 
-# Defining a custom bridge network keeps the traffic securely contained
 networks:
-  oref-inner-net:
-    driver: bridge
+    oref-inner-net:
+        driver: bridge
