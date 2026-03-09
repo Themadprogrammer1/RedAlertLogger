@@ -46,6 +46,7 @@ export default function HomeScreen() {
                 return;
             }
 
+            //! --- replace this later with registering for real push notifications ---
             // 4. Clear any old notifications so we don't accidentally create duplicates
             await Notifications.cancelAllScheduledNotificationsAsync();
 
