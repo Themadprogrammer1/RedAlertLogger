@@ -1,0 +1,12 @@
+{
+    "name": "oref-poller-service",
+    "version": "1.0.0",
+    "main": "poller.js",
+    "scripts": {
+        "start": "node poller.js"
+    },
+    "dependencies": {
+        "firebase-admin": "^13.7.0",
+        "pg": "^8.11.3"
+    }
+}
