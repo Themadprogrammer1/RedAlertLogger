@@ -1,5 +1,6 @@
 const alertModel = require('../models/alertModel');
 const alertView = require('../views/alertView');
+const fcmService = require('../services/fcmService');
 
 const API_URL = 'https://www.oref.org.il/WarningMessages/alert/alerts.json';
 
@@ -41,6 +42,7 @@ async function fetchAndProcessAlerts() {
         // If successfully inserted (not a duplicate), update the View
         if (wasInserted) {
             alertView.renderNewAlert(id, cat, data);
+            await fcmService.broadcastAlert(id, cat, title, data, desc);
         }
     } catch (err) {
         alertView.renderError(`Fetching or parsing alerts: ${err.message}`);
