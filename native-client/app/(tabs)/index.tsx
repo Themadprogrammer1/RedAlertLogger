@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ListRenderItem } from 'react-native';
+import { FlatList, ListRenderItemInfo } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { styles } from '@/styles/homeStyles';
 import { AlertData } from '@/interfaces/alert';
 import { FAKE_ALERTS } from '@/constants/mockData';
+import { Header } from '@/components/homeComponents/Header';
+import { StatusBanner } from '@/components/homeComponents/StatusBanner';
+import { AlertItem } from '@/components/homeComponents/AlertItem';
 
 /**
  * Configure how notifications behave when the app is actively open in the foreground.
@@ -78,46 +81,17 @@ export default function HomeScreen() {
         };
     }, []); // Empty dependency array means this only runs once on mount
 
-    /**
-     * Defines how a single alert item should be visually rendered in the list.
-     * Strongly typed with the AlertData interface.
-     */
-    const renderAlertItem: ListRenderItem<AlertData> = ({ item }) => (
-        <View style={styles.alertCard}>
-            <View style={styles.alertIconPlaceholder}>
-                <Text style={styles.alertIconText}>!</Text>
-            </View>
-            <View style={styles.alertDetails}>
-                <Text style={styles.alertLocation}>{item.location}</Text>
-                <Text style={styles.alertType}>{item.type}</Text>
-                <Text style={styles.alertTime}>
-                    {item.date} • {item.time}
-                </Text>
-            </View>
-        </View>
-    );
-
     // --- MAIN UI RENDER ---
     return (
-        // SafeAreaView ensures content isn't hidden behind the notch or bottom home bar
         <SafeAreaView style={styles.container}>
-            {/* Top Orange Header Section */}
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>פיקוד העורף</Text>
-                <Text style={styles.headerSubtitle}>Home Front Command</Text>
-            </View>
+            <Header />
+            <StatusBanner />
 
-            {/* Dark Grey Banner Below Header */}
-            <View style={styles.statusBanner}>
-                <Text style={styles.statusText}>התרעות אחרונות</Text>
-            </View>
-
-            {/* Scrolling List of Alerts */}
             <FlatList
-                data={alerts} // The data array to loop through
-                keyExtractor={(item) => item.id} // Unique ID for each list item
-                renderItem={renderAlertItem} // The component to draw for each item
-                contentContainerStyle={styles.listContainer} // Padding/margins for the list as a whole
+                data={alerts}
+                keyExtractor={(item: AlertData) => item.id}
+                renderItem={({ item }: ListRenderItemInfo<AlertData>) => <AlertItem item={item} />}
+                contentContainerStyle={styles.listContainer}
             />
         </SafeAreaView>
     );
