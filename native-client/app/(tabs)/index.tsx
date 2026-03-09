@@ -1,98 +1,123 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, ListRenderItem } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
+import { styles } from '@/styles/homeStyles';
+import { AlertData } from '@/interfaces/alert';
+import { FAKE_ALERTS } from '@/constants/mockData';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+/**
+ * Configure how notifications behave when the app is actively open in the foreground.
+ * Without this, notifications received while the app is open are silently ignored.
+ */
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true, // Display the notification pop-up
+        shouldPlaySound: true, // Play the device default notification sound
+        shouldSetBadge: false, // Don't update the app icon badge count
+        shouldShowBanner: true, // Show the banner at the top of the screen
+        shouldShowList: true, // Keep it in the notification center list
+    }),
+});
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+    // State to hold the list of alerts. Initialized with our fake database data.
+    const [alerts, setAlerts] = useState<AlertData[]>(FAKE_ALERTS);
+
+    /**
+     * useEffect runs once when the HomeScreen component first loads.
+     * It handles requesting notification permissions and scheduling the recurring alert.
+     */
+    useEffect(() => {
+        async function setupNotifications() {
+            // 1. Check current notification permission status
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+
+            // 2. If we don't have permission yet, ask the user for it
+            if (existingStatus !== 'granted') {
+                const { status } = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+
+            // 3. If the user denied permission, stop execution here
+            if (finalStatus !== 'granted') {
+                console.log('Failed to get push token for push notification!');
+                return;
+            }
+
+            // 4. Clear any old notifications so we don't accidentally create duplicates
+            await Notifications.cancelAllScheduledNotificationsAsync();
+
+            // 5. Schedule a new recurring local notification
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: '🔴 צבע אדום / Red Alert',
+                    body: 'התרעה הופעלה באזורך (Fake Alert)',
+                    sound: true,
+                },
+                trigger: {
+                    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                    seconds: 10, // Fires every 10 seconds (for testing purposes)
+                    repeats: true, // Keeps repeating automatically
+                },
+            });
+        }
+
+        // Execute the async function we just defined
+        setupNotifications();
+
+        /**
+         * The return function acts as a cleanup mechanism.
+         * If the user leaves this screen or the component unmounts,
+         * it clears the scheduled notifications so it stops spamming the device.
+         */
+        return () => {
+            Notifications.cancelAllScheduledNotificationsAsync();
+        };
+    }, []); // Empty dependency array means this only runs once on mount
+
+    /**
+     * Defines how a single alert item should be visually rendered in the list.
+     * Strongly typed with the AlertData interface.
+     */
+    const renderAlertItem: ListRenderItem<AlertData> = ({ item }) => (
+        <View style={styles.alertCard}>
+            <View style={styles.alertIconPlaceholder}>
+                <Text style={styles.alertIconText}>!</Text>
+            </View>
+            <View style={styles.alertDetails}>
+                <Text style={styles.alertLocation}>{item.location}</Text>
+                <Text style={styles.alertType}>{item.type}</Text>
+                <Text style={styles.alertTime}>
+                    {item.date} • {item.time}
+                </Text>
+            </View>
+        </View>
+    );
+
+    // --- MAIN UI RENDER ---
+    return (
+        // SafeAreaView ensures content isn't hidden behind the notch or bottom home bar
+        <SafeAreaView style={styles.container}>
+            {/* Top Orange Header Section */}
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>פיקוד העורף</Text>
+                <Text style={styles.headerSubtitle}>Home Front Command</Text>
+            </View>
+
+            {/* Dark Grey Banner Below Header */}
+            <View style={styles.statusBanner}>
+                <Text style={styles.statusText}>התרעות אחרונות</Text>
+            </View>
+
+            {/* Scrolling List of Alerts */}
+            <FlatList
+                data={alerts} // The data array to loop through
+                keyExtractor={(item) => item.id} // Unique ID for each list item
+                renderItem={renderAlertItem} // The component to draw for each item
+                contentContainerStyle={styles.listContainer} // Padding/margins for the list as a whole
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+        </SafeAreaView>
+    );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
