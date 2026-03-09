@@ -9,8 +9,19 @@ services:
             - farsi:/var/lib/postgresql/data
         restart: always
 
-    app:
-        build: ./server
+    api:
+        build: ./api
+        env_file:
+            - .config/.env
+        volumes:
+            - ./.config:/app/.config:ro
+        networks:
+            - oref-inner-net
+        ports:
+            - '3001:3001'
+        restart: always
+    poller:
+        build: ./poller
         env_file:
             - .config/.env
         volumes:
@@ -19,8 +30,6 @@ services:
             - db
         networks:
             - oref-inner-net
-        ports:
-            - '3001:3001'
         restart: always
 
 volumes:
